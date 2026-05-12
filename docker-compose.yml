@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: kustodian-postgres
+    environment:
+      POSTGRES_DB: kustodian
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - kustodian-network
+
+  backend:
+    build: ./backend
+    container_name: kustodian-backend
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/kustodian
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    networks:
+      - kustodian-network
+
+  frontend:
+    build: ./frontend
+    container_name: kustodian-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - kustodian-network
+
+volumes:
+  postgres_data:
+
+networks:
+  kustodian-network:
+    driver: bridge
